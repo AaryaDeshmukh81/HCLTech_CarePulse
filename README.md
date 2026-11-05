@@ -30,8 +30,6 @@ npm install
 ng serve --open
 ```
 
-**Local Application URL:** http://localhost:4200/
-
 ---
 
 **CarePulse – Bringing Healthcare Closer Through Technology.**
