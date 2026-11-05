@@ -1,0 +1,5 @@
+* { box-sizing: border-box; }
+:root { font-family: 'DM Sans', sans-serif; color: #182536; background: #f4f7fb; font-synthesis: none; }
+body { margin: 0; min-width: 320px; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }

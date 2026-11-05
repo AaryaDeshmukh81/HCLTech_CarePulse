@@ -1,0 +1,104 @@
+<section class="login-screen" *ngIf="!isLoggedIn">
+  <div class="login-card">
+    <div class="login-brand"><div class="brand-mark">✚</div><span>care<span class="brand-light">pulse</span></span></div>
+    <span class="modal-kicker">PATIENT PORTAL</span>
+    <h1>Welcome to CarePulse</h1>
+    <p class="login-intro">Enter your details to open your personal remote-care dashboard.</p>
+    <form (ngSubmit)="signIn()" #loginFormRef="ngForm">
+      <label for="patient-name">Full name</label>
+      <input id="patient-name" name="patientName" [(ngModel)]="loginForm.name" placeholder="Enter your full name" required minlength="2" />
+      <label for="patient-phone">Mobile number</label>
+      <input id="patient-phone" name="patientPhone" [(ngModel)]="loginForm.phone" placeholder="10-digit mobile number" inputmode="numeric" maxlength="10" required />
+      <label for="patient-birthdate">Date of birth</label>
+      <input id="patient-birthdate" name="patientBirthDate" type="date" [(ngModel)]="loginForm.birthDate" [max]="'2026-11-03'" required />
+      <p class="login-error" *ngIf="profileMessage">{{ profileMessage }}</p>
+      <button class="primary-btn login-submit" type="submit">Continue to dashboard <span>→</span></button>
+    </form>
+    <p class="login-footnote">Demo sign-in only. This prototype does not verify identity or securely authenticate users.</p>
+  </div>
+</section>
+
+<div class="app-shell" *ngIf="isLoggedIn">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✚</div><span>care<span class="brand-light">pulse</span></span></div>
+    <button class="profile-mini profile-mini-button" (click)="navigate('Profile')"><div class="avatar">{{ patientInitials }}</div><div><strong>{{ profile.name }}</strong><small>Patient account</small></div><span class="online-dot"></span></button>
+    <div class="nav-label">WORKSPACE</div>
+    <nav>
+      <button [class.active]="activePage === 'Overview'" (click)="navigate('Overview')"><span>▦</span> Overview</button>
+      <button [class.active]="activePage === 'My Health'" (click)="navigate('My Health')"><span>♡</span> My Health</button>
+      <button [class.active]="activePage === 'Appointments'" (click)="navigate('Appointments')"><span>▣</span> Appointments</button>
+      <button [class.active]="activePage === 'Medications'" (click)="navigate('Medications')"><span>✚</span> Medications</button>
+      <button [class.active]="activePage === 'Messages'" (click)="navigate('Messages')"><span>✉</span> Messages <i class="nav-count">2</i></button>
+      <button [class.active]="activePage === 'Alerts'" (click)="navigate('Alerts')"><span>♧</span> Alerts <i class="nav-count">{{ unacknowledgedAlerts }}</i></button>
+      <button [class.active]="activePage === 'Profile'" (click)="navigate('Profile')"><span>◎</span> My Profile</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="help-card"><div class="help-icon">?</div><strong>Need help?</strong><p>Our care team is here for you.</p><button (click)="navigate('Messages')">Contact support <span>→</span></button></div><button class="settings-link" (click)="resetDemo()">↻ Reset demo data</button></div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar"><div><div class="breadcrumb">Workspace <span>/</span> {{ activePage }}</div><h1>{{ activePage === 'Overview' ? 'Good morning, ' + profile.name.split(' ')[0] : activePage }}</h1><p class="subheading">{{ activePage === 'Overview' ? 'Here’s your health snapshot for today.' : 'Your personal remote care workspace.' }}</p></div><div class="top-actions"><button class="icon-btn" (click)="navigate('Alerts')" aria-label="Notifications">♧<b *ngIf="unacknowledgedAlerts"></b></button><button class="top-avatar top-avatar-button" (click)="navigate('Profile')" aria-label="Open profile">{{ patientInitials }}</button></div></header>
+
+    <ng-container *ngIf="activePage === 'Overview' || activePage === 'My Health'">
+      <section class="welcome-banner"><div class="banner-copy"><span class="eyebrow">YOUR HEALTH, CONNECTED</span><h2>Care that keeps<br>you moving forward.</h2><p>Stay connected with your care team and keep track of the little things that make a big difference.</p><button class="white-btn" (click)="navigate('My Health')">View health details <span>→</span></button></div><div class="banner-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="pulse-circle"><span>✚</span></div><div class="floating-card"><small>HEALTH STATUS</small><strong><i></i> Looking good</strong></div></div></section>
+
+      <div class="section-heading"><div><h3>Health overview</h3><p>Your latest readings at a glance</p></div><div class="heading-actions"><button *ngIf="activePage === 'My Health'" class="text-button" (click)="exportHealthReport()">⇩ Export report</button><button class="text-button" (click)="openVitals()">＋ Add reading</button></div></div>
+      <section class="vitals-grid">
+        <article class="vital-card" *ngFor="let v of latestVitals; let i = index"><div class="vital-top"><div class="vital-icon" [class]="'vital-icon icon-' + i">{{ ['♡','⌁','◉','♨'][i] }}</div><span class="status-pill" [class.warning]="v.status === 'warning'">{{ v.status === 'normal' ? 'In range' : 'Review' }}</span></div><div class="vital-name">{{ v.type }}</div><div class="vital-value">{{ v.value }} <small>{{ v.unit }}</small></div><div class="vital-foot">↗ {{ v.recordedAt }}</div></article>
+      </section>
+
+      <section class="panel history-panel" *ngIf="activePage === 'My Health'"><div class="panel-heading"><div><h3>Recent reading history</h3><p>Your latest recorded measurements</p></div><span class="history-count">{{ vitals.length }} records</span></div><div class="history-table-wrap"><table class="history-table"><thead><tr><th>Measurement</th><th>Value</th><th>Recorded</th><th>Status</th></tr></thead><tbody><tr *ngFor="let v of vitals.slice(0,8)"><td>{{ v.type }}</td><td>{{ v.value }} {{ v.unit }}</td><td>{{ v.recordedAt }}</td><td><span class="status-pill" [class.warning]="v.status === 'warning'">{{ v.status === 'normal' ? 'In range' : 'Review' }}</span></td></tr></tbody></table></div></section>
+
+      <div class="content-grid">
+        <section class="panel appointments-panel"><div class="panel-heading"><div><h3>Upcoming appointments</h3><p>Stay on top of your care schedule</p></div><button class="link-button" (click)="navigate('Appointments')">View all →</button></div><div class="appointment-row" *ngFor="let a of appointments.slice(0,3)"><div class="date-tile"><strong>{{ getDateDay(a.date) }}</strong><small>{{ getDateMonth(a.date) }}</small></div><div class="appointment-info"><strong>{{ a.doctor }}</strong><small>{{ a.specialty }} · {{ a.mode }} consultation</small></div><div class="appointment-time"><strong>{{ a.time }}</strong><small [class.pending]="a.status === 'Pending'">{{ a.status }}</small></div></div><button class="outline-action" (click)="showAppointmentForm = true">＋ Book an appointment</button></section>
+        <section class="panel alerts-panel"><div class="panel-heading"><div><h3>Recent alerts</h3><p>Updates from your care journey</p></div><button class="link-button" (click)="navigate('Alerts')">See all →</button></div><div class="alert-row" *ngFor="let alert of alerts.slice(0,3)"><div class="alert-symbol" [class.warn]="alert.level === 'warning'">{{ alert.level === 'warning' ? '!' : '✓' }}</div><div class="alert-copy"><strong>{{ alert.title }}</strong><p>{{ alert.detail }}</p><small>{{ alert.time }}</small></div></div><div class="empty-note" *ngIf="!alerts.length">You're all caught up.</div></section>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="activePage === 'Appointments'">
+      <div class="section-heading page-section"><div><h3>Your appointments</h3><p>Manage your upcoming virtual care visits</p></div><button class="primary-btn" (click)="showAppointmentForm = true">＋ Book appointment</button></div>
+      <section class="panel full-panel"><div class="appointment-row roomy" *ngFor="let a of appointments"><div class="date-tile"><strong>{{ getDateDay(a.date) }}</strong><small>{{ getDateMonth(a.date) }}</small></div><div class="appointment-info"><strong>{{ a.doctor }}</strong><small>{{ a.specialty }} · {{ a.mode }} consultation</small></div><div class="appointment-time"><strong>{{ a.time }}</strong><small [class.pending]="a.status === 'Pending'">{{ a.status }}</small></div><button class="small-primary" (click)="startCall()" *ngIf="a.mode === 'Video'">Join visit</button></div></section>
+    </ng-container>
+
+    <ng-container *ngIf="activePage === 'Medications'">
+      <div class="section-heading page-section"><div><h3>Medication tracker</h3><p>Keep your personal medication schedule organised</p></div><button class="primary-btn" (click)="showMedicationForm = true">＋ Add medication</button></div>
+      <section class="panel medication-summary"><div><span class="summary-label">TODAY'S ADHERENCE</span><strong>{{ medicationProgress }}%</strong><p>{{ takenMedicationCount }} of {{ medications.length }} marked as taken</p></div><div class="progress-track"><div class="progress-fill" [style.width.%]="medicationProgress"></div></div></section>
+      <section class="panel medication-list"><div class="panel-heading"><div><h3>Your schedule</h3><p>Mark each item when you have taken it</p></div><span class="history-count">{{ medications.length }} items</span></div><div class="medication-row" *ngFor="let med of medications"><div class="medication-symbol">✚</div><div class="medication-info"><strong>{{ med.name }}</strong><small>{{ med.dose }} · {{ med.time }}</small></div><span class="med-status" [class.taken]="med.taken">{{ med.taken ? 'Taken' : 'Upcoming' }}</span><button class="small-primary" (click)="toggleMedication(med.id)">{{ med.taken ? 'Undo' : 'Mark taken' }}</button><button class="remove-med" (click)="removeMedication(med.id)" aria-label="Remove medication">×</button></div><div class="empty-note" *ngIf="!medications.length">No medications added yet. Add one to create your schedule.</div></section>
+      <p class="demo-disclaimer">Demo feature only: this tracker does not send reminders or provide medication advice. Follow instructions from your qualified healthcare professional.</p>
+    </ng-container>
+
+    <ng-container *ngIf="activePage === 'Alerts'">
+      <div class="section-heading page-section"><div><h3>Health alerts</h3><p>Notifications and reminders from your care dashboard</p></div></div>
+      <section class="panel full-panel"><div class="alert-row alert-row-large" *ngFor="let alert of alerts"><div class="alert-symbol" [class.warn]="alert.level === 'warning'">{{ alert.level === 'warning' ? '!' : '✓' }}</div><div class="alert-copy"><strong>{{ alert.title }}</strong><p>{{ alert.detail }}</p><small>{{ alert.time }}</small></div><button class="mark-button" *ngIf="!alert.acknowledged" (click)="acknowledge(alert.id)">Mark read</button><span class="read-label" *ngIf="alert.acknowledged">Read</span></div><div class="empty-note" *ngIf="!alerts.length">No alerts yet.</div></section>
+    </ng-container>
+
+    <ng-container *ngIf="activePage === 'Messages'">
+      <section class="panel message-panel"><div class="message-doctor"><div class="doctor-avatar">CM</div><div><strong>CarePulse Support</strong><small><i></i> Typically replies within a few hours</small></div></div><div class="message-placeholder"><div class="message-icon">✉</div><h3>Your care team is one message away</h3><p>This demo inbox is a placeholder. In a production app, messages would be securely delivered to your care team.</p><button type="button" class="primary-btn" (click)="createSupportRequest()">Create demo support request</button></div></section>
+    </ng-container>
+
+    <ng-container *ngIf="activePage === 'Profile'">
+      <div class="section-heading page-section"><div><h3>Patient profile</h3><p>Manage your personal information</p></div><button class="primary-btn" (click)="saveProfile()">Save changes</button></div>
+      <section class="panel profile-panel">
+        <div class="profile-summary"><div class="profile-large-avatar">{{ patientInitials }}</div><div><strong>{{ profile.name }}</strong><small>Patient account · {{ patientAge }} years old</small></div></div>
+        <div class="profile-form-grid">
+          <div><label for="profile-name">Full name</label><input id="profile-name" [(ngModel)]="profile.name" /></div>
+          <div><label for="profile-phone">Phone number</label><input id="profile-phone" [(ngModel)]="profile.phone" inputmode="numeric" maxlength="10" /></div>
+          <div><label for="profile-dob">Date of birth</label><input id="profile-dob" type="date" [(ngModel)]="profile.birthDate" [max]="'2026-11-03'" /></div>
+          <div><label>Age</label><div class="readonly-field">{{ patientAge }} years</div></div>
+        </div>
+        <p class="profile-message" *ngIf="profileMessage">{{ profileMessage }}</p>
+        <div class="profile-actions"><button class="primary-btn" (click)="saveProfile()">Save profile</button><button class="cancel-btn" (click)="logout()">Log out</button></div>
+      </section>
+      <p class="demo-disclaimer">Your profile is stored in this browser for demonstration purposes only. Do not use real patient information in this prototype.</p>
+    </ng-container>
+
+    <footer class="footer"><span>© 2026 CarePulse. Your health, in sync.</span><span>Privacy-first care experience <b>·</b> Demo environment</span></footer>
+  </main>
+</div>
+
+<div class="modal-backdrop" *ngIf="showVitalForm"><div class="modal"><button class="close-btn" (click)="showVitalForm = false">×</button><span class="modal-kicker">REMOTE MONITORING</span><h2>Add a health reading</h2><p class="modal-desc">Enter a sample reading to update your dashboard.</p><label>Measurement</label><select [(ngModel)]="vitalForm.type" (ngModelChange)="updateVitalUnit()"><option>Heart rate</option><option>Blood pressure</option><option>SpO₂</option><option>Temperature</option></select><label>Value</label><div class="input-with-unit"><input [(ngModel)]="vitalForm.value" placeholder="Enter value" /><span>{{ vitalForm.unit }}</span></div><div class="modal-actions"><button class="cancel-btn" (click)="showVitalForm = false">Cancel</button><button class="primary-btn" (click)="saveVital()" [disabled]="!vitalForm.value.trim()">Save reading</button></div></div></div>
+
+<div class="modal-backdrop" *ngIf="showAppointmentForm"><div class="modal"><button class="close-btn" (click)="showAppointmentForm = false">×</button><span class="modal-kicker">VIRTUAL CARE</span><h2>Book an appointment</h2><p class="modal-desc">Choose a provider and preferred time.</p><label>Healthcare provider</label><select [(ngModel)]="appointmentForm.doctor" (ngModelChange)="onDoctorChange()"><option *ngFor="let doctor of doctors" [value]="doctor.name">{{ doctor.name }} — {{ doctor.specialty }}</option></select><label>Specialty</label><input [value]="appointmentForm.specialty" readonly /><div class="form-two"><div><label>Date</label><input type="date" [(ngModel)]="appointmentForm.date" /></div><div><label>Time</label><input type="time" [(ngModel)]="appointmentForm.time" /></div></div><label>Consultation type</label><select [(ngModel)]="appointmentForm.mode"><option>Video</option><option>Phone</option></select><div class="modal-actions"><button class="cancel-btn" (click)="showAppointmentForm = false">Cancel</button><button class="primary-btn" (click)="saveAppointment()" [disabled]="!appointmentForm.date">Request booking</button></div></div></div>
+
+<div class="modal-backdrop" *ngIf="showMedicationForm"><div class="modal"><button class="close-btn" (click)="showMedicationForm = false">×</button><span class="modal-kicker">PERSONAL HEALTH</span><h2>Add medication</h2><p class="modal-desc">Create a demo entry in your medication tracker.</p><label>Medication name</label><input [(ngModel)]="medicationForm.name" placeholder="e.g. Vitamin D3" /><label>Dose</label><input [(ngModel)]="medicationForm.dose" placeholder="e.g. 1 tablet" /><label>Scheduled time</label><input type="time" [(ngModel)]="medicationForm.time" /><div class="modal-actions"><button class="cancel-btn" (click)="showMedicationForm = false">Cancel</button><button class="primary-btn" (click)="addMedication()" [disabled]="!medicationForm.name.trim() || !medicationForm.dose.trim()">Add to schedule</button></div></div></div>
+
+<div class="call-backdrop" *ngIf="showCall"><div class="call-window"><button class="close-btn call-close" (click)="closeCall()">×</button><div class="call-status"><i></i> {{ callActive ? 'Demo consultation in progress' : 'Call ended' }}</div><div class="doctor-large">AM</div><h2>{{ appointmentForm.doctor }}</h2><p>{{ appointmentForm.specialty }}</p><div class="call-clock">{{ callTime }}</div><div class="call-note">This is a simulated consultation screen. No video or audio is being transmitted.</div><div class="call-controls"><button class="call-control">♩</button><button class="call-control">▣</button><button class="end-call" (click)="closeCall()">☎</button></div></div></div>
